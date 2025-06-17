@@ -6,7 +6,7 @@ import './Home.css';
 
 function Closed({ contractAddress, contractABI }) {
   const [closedCampaigns, setClosedCampaigns] = useState([]);
-  const [donationAmounts, setDonationAmounts] = useState({}); 
+  const [donationAmounts, setDonationAmounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -23,7 +23,6 @@ function Closed({ contractAddress, contractABI }) {
       const contract = new ethers.Contract(contractAddress, contractABI, signer);
       
       const allCampaigns = await contract.getCampaigns();
-      const currentTime = Math.floor(Date.now() / 1000);
       
       const close = allCampaigns.filter((camp) => {
         return camp.status === "closed"

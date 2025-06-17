@@ -76,63 +76,36 @@ function App() {
   };
 
   const checkWalletConnection = async () => {
-    if (window.ethereum) {
-      try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const network = await provider.getNetwork();
-        
-        // Check if we're on Sei Testnet
-        if (network.chainId !== BigInt(SEI_TESTNET.chainId)) {
-          await switchToSeiTestnet();
-        }
-
-        const signer = await provider.getSigner();
-        const address = await signer.getAddress();
-        await initiateContract(signer);
-        setWalletAddress(address);
-        setConnected(true);
-        console.log("connected");
-      } catch (error) {
-        console.error("Error connecting to wallet:", error);
+    try {
+      if (!window.ethereum) {
+        console.log('Please install MetaMask!');
+        return;
       }
+
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      if (accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+        setConnected(true);
+      }
+    } catch (error) {
+      console.error('Error checking wallet connection:', error);
     }
   };
 
   const onConnect = async () => {
-    if (window.ethereum) {
-      try {
-        toast.info("Please confirm wallet connection", {
-          position: "top-center",
-        });
-
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        
-        // Switch to Sei Testnet
-        await switchToSeiTestnet();
-        
-        const signer = await provider.getSigner();
-        const address = await signer.getAddress();
-        
-        setWalletAddress(address);
-        toast.success("Wallet connected successfully!", {
-          position: "top-center",
-        });
-
-        await initiateContract(signer);
-        setConnected(true);
-      } catch (e) {
-        toast.error("Failed connecting to wallet", {
-          position: "top-center",
-        });
-        console.log("error", e);
+    try {
+      if (!window.ethereum) {
+        console.log('Please install MetaMask!');
+        return;
       }
-    } else {
-      toast.error("Please install MetaMask!", {
-        position: "top-center",
-      });
+
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      setWalletAddress(accounts[0]);
+      setConnected(true);
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
     }
-  }
+  };
 
   const initiateContract = async (signer) => {
     try {
@@ -178,11 +151,11 @@ function App() {
             <Routes>
               <Route
                 path='/create'
-                element={<Create contract={contract} />}
+                element={<Create contractAddress={contractData.address} contractABI={contractData.abi} />}
               />
               <Route
                 path='/'
-                element={<Home contract={contract} />}
+                element={<Home contractAddress={contractData.address} contractABI={contractData.abi} />}
               />
               <Route
                 path='/closed'

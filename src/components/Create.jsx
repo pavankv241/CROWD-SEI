@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button, Form, Row } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import axios from 'axios';
@@ -12,16 +13,17 @@ const pinata = new PinataSDK({
   pinataGateway: "beige-sophisticated-baboon-74.mypinata.cloud",
 })
 
-const Create = ({ contract }) => {
+function Create({ contractAddress, contractABI }) {
   const [processing, setProcessing] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
-  const [formInfo, setFormInfo] = useState({
-    title: "",
-    description: "",
-    target: 0,
-    deadline: 0,
-    imageHash: "" 
+  const [formInput, setFormInput] = useState({
+    title: '',
+    description: '',
+    target: '',
+    deadline: '',
+    image: ''
   });
+  const navigate = useNavigate();
 
   const handleDateChange = (date) => {
     setSelectedDate(date);
@@ -42,7 +44,7 @@ const Create = ({ contract }) => {
     if (name === "deadline") {
       value = Math.floor(new Date(value).getTime() / 1000);
     }
-    setFormInfo((prevState) => ({ ...prevState, [name]: value }));
+    setFormInput((prevState) => ({ ...prevState, [name]: value }));
   };
 
   const handleImageUpload = async (file) => {
@@ -50,9 +52,9 @@ const Create = ({ contract }) => {
 
     try {
       const response = await pinata.upload.file(file);
-      setFormInfo((prevState) => ({
+      setFormInput((prevState) => ({
         ...prevState,
-        imageHash: `https://beige-sophisticated-baboon-74.mypinata.cloud/ipfs/${response.IpfsHash}`,
+        image: `https://beige-sophisticated-baboon-74.mypinata.cloud/ipfs/${response.IpfsHash}`,
       }));
       toast.success('Image uploaded successfully', { position: "top-center" });
     } catch (error) {
@@ -64,17 +66,17 @@ const Create = ({ contract }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formInfo.target <= 0) {
+    if (formInput.target <= 0) {
       toast.error('Target must be greater than 0', { position: "top-center" });
       return;
     }
 
-    if (formInfo.deadline < Date.now() / 1000) {
+    if (formInput.deadline < Date.now() / 1000) {
       toast.error('Deadline must be a future date', { position: "top-center" });
       return;
     }
 
-    if (!formInfo.imageHash) {
+    if (!formInput.image) {
       toast.error('Please upload an image', { position: "top-center" });
       return;
     }
@@ -87,26 +89,27 @@ const Create = ({ contract }) => {
       const address = await signer.getAddress();
       
       // Convert target amount to wei
-      const targetInWei = ethers.parseEther(formInfo.target.toString());
+      const targetInWei = ethers.parseEther(formInput.target.toString());
       
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
       const tx = await contract.createCampaign(
         address,
-        formInfo.title,
-        formInfo.description,
+        formInput.title,
+        formInput.description,
         targetInWei,
-        formInfo.deadline,
-        formInfo.imageHash
+        formInput.deadline,
+        formInput.image
       );
       
       await tx.wait();
 
       toast.success("Campaign created successfully", { position: "top-center" });
-      setFormInfo({
+      setFormInput({
         title: "",
         description: "",
         target: 0,
         deadline: 0,
-        imageHash: ""
+        image: ""
       });
     } catch (error) {
       console.error(error);

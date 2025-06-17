@@ -1,174 +1,175 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Button, Alert, Spinner, Form, ProgressBar } from 'react-bootstrap';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { ethers } from 'ethers';
-import { useNavigate } from 'react-router-dom';
 import './Home.css';
-import "react-toastify/dist/ReactToastify.css";
 
-// Base64 encoded 1x1 transparent pixel
-const FALLBACK_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
-
-function Home({ contract }) {
+function Home({ contractAddress, contractABI }) {
   const [campaigns, setCampaigns] = useState([]);
+  const [donationAmounts, setDonationAmounts] = useState({});
   const [loading, setLoading] = useState(true);
-  const [donationAmount, setDonationAmount] = useState("");
-  const [selectedCampaign, setSelectedCampaign] = useState(null);
-  const navigate = useNavigate();
+  const [error, setError] = useState(null);
 
-  const formatEther = (value) => {
+  const getCampaigns = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      if (!value) return "0";
-      return ethers.formatEther(value);
-    } catch (error) {
-      console.error("Error formatting ether value:", error);
-      return "0";
-    }
-  };
+      if (!window.ethereum) {
+        throw new Error('MetaMask not found. Please make sure MetaMask is installed and connected.');
+      }
 
-  const formatDate = (timestamp) => {
-    try {
-      if (!timestamp) return "N/A";
-      return new Date(Number(timestamp) * 1000).toLocaleDateString();
-    } catch (error) {
-      console.error("Error formatting date:", error);
-      return "N/A";
-    }
-  };
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+      
+      const allCampaigns = await contract.getCampaigns();
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      const open = allCampaigns.filter((camp) => {
+        return camp.status === "open"
+      });
 
-  const fetchCampaigns = async () => {
-    try {
-      const campaigns = await contract.getCampaigns();
-      const formattedCampaigns = campaigns.map((campaign, index) => ({
-        id: index,
-        title: campaign.title || "Untitled Campaign",
-        description: campaign.description || "No description available",
-        imageUrl: campaign.imageUrl || FALLBACK_IMAGE,
-        target: formatEther(campaign.target),
-        collected: formatEther(campaign.collected),
-        deadline: formatDate(campaign.deadline),
-        owner: campaign.owner || "0x0000000000000000000000000000000000000000",
-        closed: campaign.closed || false,
-      }));
-      setCampaigns(formattedCampaigns);
-      setLoading(false);
+      setCampaigns(open);
     } catch (error) {
       console.error("Error loading campaigns:", error);
-      toast.error("Error loading campaigns. Please try again.");
+      setError('Failed to load campaigns. Please try again later.');
+    } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (contract) {
-      fetchCampaigns();
-    }
-  }, [contract]);
+    getCampaigns();
+  }, []);
 
-  const handleDonate = async (campaignId) => {
-    if (!donationAmount || isNaN(donationAmount) || Number(donationAmount) <= 0) {
-      toast.error("Please enter a valid donation amount");
+  const handleDonationChange = (campaignId, value) => {
+    setDonationAmounts(prev => ({
+      ...prev,
+      [campaignId]: value
+    }));
+  };
+
+  const donateToCampaign = async (campaignId) => {
+    const donationAmount = donationAmounts[campaignId];
+    const parsedAmount = parseFloat(donationAmount);
+
+    if (!parsedAmount || parsedAmount <= 0 || isNaN(parsedAmount)) {
+      toast.error('Please enter a valid donation amount.', { position: 'top-center' });
       return;
     }
 
     try {
-      const amount = ethers.parseEther(donationAmount);
-      const tx = await contract.donate(campaignId, { value: amount });
+      if (!window.ethereum) {
+        throw new Error('MetaMask not found. Please make sure MetaMask is installed and connected.');
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+      
+      const amountInWei = ethers.parseEther(parsedAmount.toString());
+
+      const tx = await contract.donateToCampaign(campaignId, { value: amountInWei });
       await tx.wait();
-      toast.success("Donation successful!");
-      setDonationAmount("");
-      fetchCampaigns();
+
+      console.log('Transaction:', tx);
+      toast.success('Donation successful!', { position: 'top-center' });
+
+      // Update campaigns based on new collected amount
+      getCampaigns();
+      setDonationAmounts(prev => ({
+        ...prev,
+        [campaignId]: ''
+      }));
+
     } catch (error) {
-      console.error("Error donating:", error);
-      toast.error("Error making donation. Please try again.");
+      console.error("Error donating to campaign:", error);
+      toast.error(`Donation failed. ${error.message || 'Please try again.'}`, { position: 'top-center' });
     }
   };
 
-  const handleImageError = (e) => {
-    e.target.onerror = null; // Prevent infinite loop
-    e.target.src = FALLBACK_IMAGE;
+  const calculateProgress = (collected, target) => {
+    return (collected / target) * 100;
   };
 
-  const renderCampaigns = () => {
-    if (loading) {
-      return <div className="text-white text-center">Loading campaigns...</div>;
-    }
+  const renderCampaigns = (campaigns, isClosed) => (
+    <Row xs={1} md={2} lg={3} className="g-4">
+      {campaigns.map((campaign, index) => {
+        const collected = ethers.formatEther(campaign.amountCollected);
+        const target = ethers.formatEther(campaign.target);
+        const progress = calculateProgress(collected, target);
+        return (
+          <Col key={index} className="d-flex align-items-stretch">
+            <div className="card custom-card">
+              <img
+                className="card-img-top"
+                src={campaign.image}
+                alt={campaign.title}
+                style={{
+                  height: '200px',
+                  objectFit: 'cover',
+                  width: '100%'
+                }}
+              />
+              <div className="card-body">
+                <h5 className="card-title">{campaign.title}</h5>
+                <p className="card-text">{campaign.description}</p>
+                <p><strong>Target:</strong> {target} SEI</p>
+                <p><strong>Collected:</strong> {collected} SEI</p>
+                <p><strong>Deadline:</strong> {new Date(campaign.deadline * 1000).toLocaleString()}</p>
 
-    if (campaigns.length === 0) {
-      return <div className="text-white text-center">No campaigns found</div>;
-    }
+                <ProgressBar 
+                  now={isClosed ? 100 : progress} 
+                  label={isClosed ? 'Campaign Closed' : `${Math.round(progress)}%`} 
+                  variant={isClosed ? "danger" : "success"} 
+                />
 
-    return campaigns.map((campaign) => (
-      <div
-        key={campaign.id}
-        className="bg-white/10 backdrop-blur-lg rounded-lg p-6 mb-6 hover:bg-white/20 transition-all duration-300"
-      >
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="w-full md:w-1/3">
-            <img
-              src={campaign.imageUrl}
-              alt={campaign.title}
-              className="w-full h-48 object-cover rounded-lg bg-gray-800"
-              onError={handleImageError}
-            />
-          </div>
-          <div className="w-full md:w-2/3">
-            <h3 className="text-2xl font-bold text-white mb-2">{campaign.title}</h3>
-            <p className="text-gray-300 mb-4">{campaign.description}</p>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <p className="text-gray-400">Target</p>
-                <p className="text-white font-semibold">{campaign.target} SEI</p>
-              </div>
-              <div>
-                <p className="text-gray-400">Collected</p>
-                <p className="text-white font-semibold">{campaign.collected} SEI</p>
-              </div>
-              <div>
-                <p className="text-gray-400">Deadline</p>
-                <p className="text-white font-semibold">{campaign.deadline}</p>
-              </div>
-              <div>
-                <p className="text-gray-400">Owner</p>
-                <p className="text-white font-semibold text-sm">
-                  {campaign.owner.slice(0, 6)}...{campaign.owner.slice(-4)}
-                </p>
+                {!isClosed && (
+                  <>
+                    <Form.Control
+                      type="number"
+                      placeholder="Enter donation amount in SEI"
+                      value={donationAmounts[campaign.id] || ''}
+                      onChange={(e) => handleDonationChange(campaign.id, e.target.value)}
+                      className="mb-3 mt-3"
+                      min="0"
+                      step="0.1"
+                    />
+                    <Button
+                      onClick={() => donateToCampaign(campaign.id)}
+                      variant="primary"
+                      className="w-100"
+                      disabled={!donationAmounts[campaign.id]} 
+                    >
+                      Donate SEI
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
-            {!campaign.closed && (
-              <div className="flex gap-4">
-                <input
-                  type="number"
-                  placeholder="Enter donation amount in SEI"
-                  value={donationAmount}
-                  onChange={(e) => setDonationAmount(e.target.value)}
-                  className="flex-1 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-                />
-                <button
-                  onClick={() => handleDonate(campaign.id)}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Donate SEI
-                </button>
-              </div>
-            )}
-            {campaign.closed && (
-              <div className="text-red-500 font-semibold">Campaign Closed</div>
-            )}
-          </div>
-        </div>
-      </div>
-    ));
-  };
+          </Col>
+        );
+      })}
+    </Row>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
-      <div className="container mx-auto px-4 py-12">
-        <ToastContainer position="top-center" />
-        <h1 className="text-4xl font-bold text-white mb-12">Active Campaigns</h1>
-        <div className="space-y-6">
-          {renderCampaigns()}
-        </div>
+    <div className="container-fluid mt-5">
+      <div className="row">
+        <main role="main" className="col-lg-12 mx-auto" style={{ maxWidth: '1000px' }}>
+          <div className="content mx-auto">
+            <h2 className="text-center mb-4 mt-5">Open Campaigns</h2>
+            {error && <Alert variant="danger">{error}</Alert>}
+            {loading ? (
+              <div className="text-center mt-5">
+                <Spinner animation="border" />
+                <p>Loading campaigns...</p>
+              </div>
+            ) : (
+              renderCampaigns(campaigns, false)
+            )}
+          </div>
+        </main>
       </div>
     </div>
   );

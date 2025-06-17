@@ -1,0 +1,96 @@
+/* General body styling */
+body {
+  background-color: #1a202c;
+  color: #f7fafc;
+  font-family: 'Arial', sans-serif;
+}
+
+/* Container for centered form */
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Gradient background for the form container */
+.bg-gradient {
+  background: linear-gradient(to right, #1a202c, #2d3748);
+  border-radius: 8px;
+  padding: 2rem;
+}
+
+/* Form Title */
+h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Form Fields */
+input[type="text"], input[type="number"], textarea, input[type="file"] {
+  width: 100%;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  border-radius: 5px;
+  border: 1px solid #4a5568;
+  background-color: #2d3748;
+  color: #f7fafc;
+}
+
+/* Button styling */
+button {
+  background-color: #4c51bf;
+  color: white;
+  font-size: 1rem;
+  padding: 0.75rem 2rem;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #718096;
+}
+
+button:hover {
+  background-color: #434190;
+}
+
+/* Form label */
+label {
+  color: #e2e8f0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Toast styling */
+.Toastify__toast-container {
+  font-family: 'Arial', sans-serif;
+  padding: 0.5rem;
+}
+
+.Toastify__toast {
+  background-color: #2b6cb0;
+  color: white;
+}
+
+.Toastify__toast--error {
+  background-color: #e53e3e;
+}
+
+/* Responsive Styling */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+}
+
+.wallet-info {
+  margin-top: 70px;
+  padding: 10px;
+  background-color: #000000; /* Light background for visibility */
+  border-radius: 1px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}

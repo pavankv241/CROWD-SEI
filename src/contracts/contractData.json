@@ -1,10 +1,106 @@
 {
-	"address": "0xfB04D48dF350de7d2367C92AA6745c62BB7B3da0",
+	"address": "0xd1f0D6B2D72Cb5a92BF2c55849708b8072463233",
 	"abi": [
 		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "videoId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "viewer",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "PremiumAccess",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "videoId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "owner",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "string",
+					"name": "title",
+					"type": "string"
+				}
+			],
+			"name": "VideoCreated",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "videoId",
+					"type": "uint256"
+				},
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "viewer",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "VideoWatched",
+			"type": "event"
+		},
+		{
 			"inputs": [],
-			"stateMutability": "nonpayable",
-			"type": "constructor"
+			"name": "BASIS_POINTS",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "PLATFORM_FEE",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
 		},
 		{
 			"inputs": [
@@ -25,7 +121,12 @@
 				},
 				{
 					"internalType": "uint256",
-					"name": "_target",
+					"name": "_premiumPrice",
+					"type": "uint256"
+				},
+				{
+					"internalType": "uint256",
+					"name": "_watchPrice",
 					"type": "uint256"
 				},
 				{
@@ -35,11 +136,16 @@
 				},
 				{
 					"internalType": "string",
-					"name": "_image",
+					"name": "_videoUrl",
+					"type": "string"
+				},
+				{
+					"internalType": "string",
+					"name": "_thumbnailUrl",
 					"type": "string"
 				}
 			],
-			"name": "createCampaign",
+			"name": "createVideo",
 			"outputs": [
 				{
 					"internalType": "uint256",
@@ -54,11 +160,24 @@
 			"inputs": [
 				{
 					"internalType": "uint256",
-					"name": "_id",
+					"name": "_videoId",
 					"type": "uint256"
 				}
 			],
-			"name": "donateToCampaign",
+			"name": "deactivateVideo",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "_videoId",
+					"type": "uint256"
+				}
+			],
+			"name": "donateToPremiumCampaign",
 			"outputs": [],
 			"stateMutability": "payable",
 			"type": "function"
@@ -67,91 +186,7 @@
 			"inputs": [
 				{
 					"internalType": "uint256",
-					"name": "_id",
-					"type": "uint256"
-				}
-			],
-			"name": "getDonators",
-			"outputs": [
-				{
-					"internalType": "address[]",
-					"name": "",
-					"type": "address[]"
-				},
-				{
-					"internalType": "uint256[]",
-					"name": "",
-					"type": "uint256[]"
-				}
-			],
-			"stateMutability": "view",
-			"type": "function"
-		},
-		{
-			"inputs": [],
-			"name": "getCampaigns",
-			"outputs": [
-				{
-					"components": [
-						{
-							"internalType": "address",
-							"name": "owner",
-							"type": "address"
-						},
-						{
-							"internalType": "string",
-							"name": "title",
-							"type": "string"
-						},
-						{
-							"internalType": "string",
-							"name": "description",
-							"type": "string"
-						},
-						{
-							"internalType": "uint256",
-							"name": "target",
-							"type": "uint256"
-						},
-						{
-							"internalType": "uint256",
-							"name": "deadline",
-							"type": "uint256"
-						},
-						{
-							"internalType": "uint256",
-							"name": "amountCollected",
-							"type": "uint256"
-						},
-						{
-							"internalType": "string",
-							"name": "image",
-							"type": "string"
-						},
-						{
-							"internalType": "address[]",
-							"name": "donators",
-							"type": "address[]"
-						},
-						{
-							"internalType": "string",
-							"name": "status",
-							"type": "string"
-						}
-					],
-					"internalType": "struct CrowdFunding.CampaignData[]",
-					"name": "",
-					"type": "tuple[]"
-				}
-			],
-			"stateMutability": "view",
-			"type": "function"
-		},
-		{
-			"inputs": [
-				{
-					"internalType": "uint256",
-					"name": "_id",
+					"name": "_videoId",
 					"type": "uint256"
 				},
 				{
@@ -175,11 +210,147 @@
 			"inputs": [
 				{
 					"internalType": "uint256",
+					"name": "_videoId",
+					"type": "uint256"
+				}
+			],
+			"name": "getDonators",
+			"outputs": [
+				{
+					"internalType": "address[]",
+					"name": "",
+					"type": "address[]"
+				},
+				{
+					"internalType": "uint256[]",
+					"name": "",
+					"type": "uint256[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "getVideos",
+			"outputs": [
+				{
+					"components": [
+						{
+							"internalType": "address",
+							"name": "owner",
+							"type": "address"
+						},
+						{
+							"internalType": "string",
+							"name": "title",
+							"type": "string"
+						},
+						{
+							"internalType": "string",
+							"name": "description",
+							"type": "string"
+						},
+						{
+							"internalType": "uint256",
+							"name": "premiumPrice",
+							"type": "uint256"
+						},
+						{
+							"internalType": "uint256",
+							"name": "watchPrice",
+							"type": "uint256"
+						},
+						{
+							"internalType": "uint256",
+							"name": "deadline",
+							"type": "uint256"
+						},
+						{
+							"internalType": "uint256",
+							"name": "amountCollected",
+							"type": "uint256"
+						},
+						{
+							"internalType": "string",
+							"name": "videoUrl",
+							"type": "string"
+						},
+						{
+							"internalType": "string",
+							"name": "thumbnailUrl",
+							"type": "string"
+						},
+						{
+							"internalType": "address[]",
+							"name": "donators",
+							"type": "address[]"
+						},
+						{
+							"internalType": "string",
+							"name": "status",
+							"type": "string"
+						},
+						{
+							"internalType": "bool",
+							"name": "isActive",
+							"type": "bool"
+						}
+					],
+					"internalType": "struct VideoPlatform.VideoData[]",
+					"name": "",
+					"type": "tuple[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "_videoId",
+					"type": "uint256"
+				},
+				{
+					"internalType": "address",
+					"name": "_viewer",
+					"type": "address"
+				}
+			],
+			"name": "hasWatchedVideo",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "numberOfVideos",
+			"outputs": [
+				{
+					"internalType": "uint256",
 					"name": "",
 					"type": "uint256"
 				}
 			],
-			"name": "campaigns",
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"name": "videos",
 			"outputs": [
 				{
 					"internalType": "address",
@@ -198,7 +369,12 @@
 				},
 				{
 					"internalType": "uint256",
-					"name": "target",
+					"name": "premiumPrice",
+					"type": "uint256"
+				},
+				{
+					"internalType": "uint256",
+					"name": "watchPrice",
 					"type": "uint256"
 				},
 				{
@@ -213,24 +389,34 @@
 				},
 				{
 					"internalType": "string",
-					"name": "image",
+					"name": "videoUrl",
 					"type": "string"
+				},
+				{
+					"internalType": "string",
+					"name": "thumbnailUrl",
+					"type": "string"
+				},
+				{
+					"internalType": "bool",
+					"name": "isActive",
+					"type": "bool"
 				}
 			],
 			"stateMutability": "view",
 			"type": "function"
 		},
 		{
-			"inputs": [],
-			"name": "numberOfCampaigns",
-			"outputs": [
+			"inputs": [
 				{
 					"internalType": "uint256",
-					"name": "",
+					"name": "_videoId",
 					"type": "uint256"
 				}
 			],
-			"stateMutability": "view",
+			"name": "watchVideo",
+			"outputs": [],
+			"stateMutability": "payable",
 			"type": "function"
 		}
 	]

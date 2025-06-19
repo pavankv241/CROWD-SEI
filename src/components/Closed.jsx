@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Button, Alert, Spinner, Form, ProgressBar } from 'react-bootstrap';
+import { Row, Col, Button, Alert, Spinner, Badge } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { ethers } from 'ethers';
 import './Home.css';
 
-function Closed({ contractAddress, contractABI }) {
-  const [closedCampaigns, setClosedCampaigns] = useState([]);
-  const [donationAmounts, setDonationAmounts] = useState({});
+function Closed({ contractAddress, contractABI, contract }) {
+  const [closedVideos, setClosedVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const getCampaigns = async () => {
+  const getVideos = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -18,92 +17,72 @@ function Closed({ contractAddress, contractABI }) {
         throw new Error('MetaMask not found. Please make sure MetaMask is installed and connected.');
       }
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+      if (!contract) {
+        throw new Error('Contract not initialized. Please connect your wallet.');
+      }
       
-      const allCampaigns = await contract.getCampaigns();
+      const allVideos = await contract.getVideos();
       
-      const close = allCampaigns.filter((camp) => {
-        return camp.status === "closed"
+      // Filter videos that are no longer in premium mode
+      const closed = allVideos.filter((video) => {
+        return video.status === "closed" && video.isActive;
       });
 
-      setClosedCampaigns(close);
+      setClosedVideos(closed);
     } catch (error) {
-      console.error("Error loading campaigns:", error);
-      setError('Failed to load campaigns. Please try again later.');
+      console.error("Error loading videos:", error);
+      setError('Failed to load videos. Please try again later.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    getCampaigns();
-  }, []);
-
-  const handleDonationChange = (campaignId, value) => {
-    setDonationAmounts(prev => ({
-      ...prev,
-      [campaignId]: value
-    }));
-  };
-
-  const donateToCampaign = async (campaignId) => {
-    const donationAmount = donationAmounts[campaignId];
-    const parsedAmount = parseFloat(donationAmount);
-
-    if (!parsedAmount || parsedAmount <= 0 || isNaN(parsedAmount)) {
-      toast.error('Please enter a valid donation amount.', { position: 'top-center' });
-      return;
+    if (contract) {
+      getVideos();
     }
+  }, [contract]);
 
+  const watchVideo = async (videoId, watchPrice) => {
     try {
       if (!window.ethereum) {
         throw new Error('MetaMask not found. Please make sure MetaMask is installed and connected.');
       }
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+      if (!contract) {
+        throw new Error('Contract not initialized. Please connect your wallet.');
+      }
       
-      const amountInWei = ethers.parseEther(parsedAmount.toString());
+      const amountInWei = ethers.parseEther(watchPrice.toString());
 
-      const tx = await contract.donateToCampaign(campaignId, { value: amountInWei });
+      const tx = await contract.watchVideo(videoId, { value: amountInWei });
       await tx.wait();
 
       console.log('Transaction:', tx);
-      toast.success('Donation successful!', { position: 'top-center' });
+      toast.success('Payment successful! You can now watch the video.', { position: 'top-center' });
 
-      // Update campaigns based on new collected amount
-      getCampaigns();
-      setDonationAmounts(prev => ({
-        ...prev,
-        [campaignId]: ''
-      }));
+      // Refresh videos
+      getVideos();
 
     } catch (error) {
-      console.error("Error donating to campaign:", error);
-      toast.error(`Donation failed. ${error.message || 'Please try again.'}`, { position: 'top-center' });
+      console.error("Error watching video:", error);
+      toast.error(`Payment failed. ${error.message || 'Please try again.'}`, { position: 'top-center' });
     }
   };
 
-  const calculateProgress = (collected, target) => {
-    return (collected / target) * 100;
-  };
-
-  const renderCampaigns = (campaigns, isClosed) => (
+  const renderVideos = () => (
     <Row xs={1} md={2} lg={3} className="g-4">
-      {campaigns.map((campaign, index) => {
-        const collected = ethers.formatEther(campaign.amountCollected);
-        const target = ethers.formatEther(campaign.target);
-        const progress = calculateProgress(collected, target);
+      {closedVideos.map((video, index) => {
+        const watchPrice = ethers.formatEther(video.watchPrice);
+        const amountCollected = ethers.formatEther(video.amountCollected);
+        
         return (
           <Col key={index} className="d-flex align-items-stretch">
             <div className="card custom-card">
               <img
                 className="card-img-top"
-                src={campaign.image}
-                alt={campaign.title}
+                src={video.thumbnailUrl}
+                alt={video.title}
                 style={{
                   height: '200px',
                   objectFit: 'cover',
@@ -111,39 +90,34 @@ function Closed({ contractAddress, contractABI }) {
                 }}
               />
               <div className="card-body">
-                <h5 className="card-title">{campaign.title}</h5>
-                <p className="card-text">{campaign.description}</p>
-                <p><strong>Target:</strong> {target} SEI</p>
-                <p><strong>Collected:</strong> {collected} SEI</p>
-                <p><strong>Deadline:</strong> {new Date(campaign.deadline * 1000).toLocaleString()}</p>
+                <h5 className="card-title">{video.title}</h5>
+                <p className="card-text">{video.description}</p>
+                
+                <div className="mb-3">
+                  <Badge bg="secondary" className="mb-2">
+                    Premium Campaign Ended
+                  </Badge>
+                </div>
 
-                <ProgressBar 
-                  now={isClosed ? 100 : progress} 
-                  label={isClosed ? 'Campaign Closed' : `${Math.round(progress)}%`} 
-                  variant={isClosed ? "danger" : "success"} 
-                />
+                <p><strong>Watch Price:</strong> {watchPrice} SEI</p>
+                <p><strong>Total Collected:</strong> {amountCollected} SEI</p>
+                <p><strong>Premium Ended:</strong> {new Date(Number(video.deadline) * 1000).toLocaleString()}</p>
 
-                {!isClosed && (
-                  <>
-                    <Form.Control
-                      type="number"
-                      placeholder="Enter donation amount in SEI"
-                      value={donationAmounts[campaign.id] || ''}
-                      onChange={(e) => handleDonationChange(campaign.id, e.target.value)}
-                      className="mb-3 mt-3"
-                      min="0"
-                      step="0.1"
-                    />
-                    <Button
-                      onClick={() => donateToCampaign(campaign.id)}
-                      variant="primary"
-                      className="w-100"
-                      disabled={!donationAmounts[campaign.id]} 
-                    >
-                      Donate SEI
-                    </Button>
-                  </>
-                )}
+                <Button
+                  onClick={() => watchVideo(index, watchPrice)}
+                  variant="primary"
+                  className="w-100 mb-2"
+                >
+                  Watch Video ({watchPrice} SEI)
+                </Button>
+
+                <Button
+                  variant="outline-secondary"
+                  className="w-100"
+                  onClick={() => window.open(video.videoUrl, '_blank')}
+                >
+                  View Video
+                </Button>
               </div>
             </div>
           </Col>
@@ -155,17 +129,29 @@ function Closed({ contractAddress, contractABI }) {
   return (
     <div className="container-fluid mt-5">
       <div className="row">
-        <main role="main" className="col-lg-12 mx-auto" style={{ maxWidth: '1000px' }}>
+        <main role="main" className="col-lg-12 mx-auto" style={{ maxWidth: '1200px' }}>
           <div className="content mx-auto">
-            <h2 className="text-center mb-4 mt-5">Closed Campaigns</h2>
+            <div className="text-center mb-4 mt-5">
+              <h2>Videos Available for Purchase</h2>
+              <p className="text-muted">
+                These videos are no longer in premium mode. Pay the watch price to view them.
+              </p>
+            </div>
+            
             {error && <Alert variant="danger">{error}</Alert>}
+            
             {loading ? (
               <div className="text-center mt-5">
                 <Spinner animation="border" />
-                <p>Loading campaigns...</p>
+                <p>Loading videos...</p>
+              </div>
+            ) : closedVideos.length === 0 ? (
+              <div className="text-center mt-5">
+                <h4>No videos available for purchase</h4>
+                <p>All videos are currently in premium mode or have been deactivated.</p>
               </div>
             ) : (
-              renderCampaigns(closedCampaigns, true)
+              renderVideos()
             )}
           </div>
         </main>

@@ -107,6 +107,20 @@ function App() {
     }
   };
 
+  const disconnectWallet = () => {
+    setWalletAddress(null);
+    setConnected(false);
+    setContract(null);
+  };
+
+  const toggleWalletConnection = async () => {
+    if (connected) {
+      disconnectWallet();
+    } else {
+      await onConnect();
+    }
+  };
+
   const initiateContract = async (signer) => {
     try {
       const contract = new ethers.Contract(
@@ -139,30 +153,43 @@ function App() {
     };
   }, []);
 
+  // Initialize contract when wallet is connected
+  useEffect(() => {
+    const initializeContractOnConnection = async () => {
+      if (connected && window.ethereum) {
+        try {
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const signer = await provider.getSigner();
+          await initiateContract(signer);
+        } catch (error) {
+          console.error("Error initializing contract:", error);
+        }
+      }
+    };
+
+    initializeContractOnConnection();
+  }, [connected]);
+
   return (
     <BrowserRouter>
       <ToastContainer />
       <div className="App font-jersey-25">
         <div className="gradient-bg-welcome">
-          <Nav checkWallet={onConnect} connected={connected} walletAddress={walletAddress} />
-          {!contract ? (
-            <div className='text-white flex items-center justify-center'>Loading...</div>
-          ) : (
-            <Routes>
-              <Route
-                path='/create'
-                element={<Create contractAddress={contractData.address} contractABI={contractData.abi} />}
-              />
-              <Route
-                path='/'
-                element={<Home contractAddress={contractData.address} contractABI={contractData.abi} />}
-              />
-              <Route
-                path='/closed'
-                element={<Closed contractAddress={contractData.address} contractABI={contractData.abi} />}
-              />
-            </Routes>
-          )}
+          <Nav checkWallet={toggleWalletConnection} connected={connected} walletAddress={walletAddress} />
+          <Routes>
+            <Route
+              path='/create'
+              element={<Create contractAddress={contractData.address} contractABI={contractData.abi} contract={contract} connected={connected} />}
+            />
+            <Route
+              path='/'
+              element={<Home contractAddress={contractData.address} contractABI={contractData.abi} contract={contract} connected={connected} />}
+            />
+            <Route
+              path='/closed'
+              element={<Closed contractAddress={contractData.address} contractABI={contractData.abi} contract={contract} />}
+            />
+          </Routes>
         </div>
       </div>
     </BrowserRouter>

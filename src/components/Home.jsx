@@ -175,30 +175,37 @@ function Home({ contractAddress, contractABI, contract, connected }) {
                     </Badge>
                   )}
                 </div>
-                <p><strong>Premium Price:</strong> {premiumPrice} SEI</p>
-                <p><strong>Watch Price:</strong> {watchPrice} SEI</p>
-                <p><strong>Total Collected:</strong> {amountCollected} SEI</p>
-                <p><strong>Premium Ends:</strong> {new Date(Number(video.deadline) * 1000).toLocaleString()}</p>
-                {isPremiumActive ? (
-                  <Button
-                    onClick={() => donateToPremiumCampaign(index, premiumPrice)}
-                    variant="warning"
-                    className="w-100 mb-2"
-                  >
-                    Get Premium Access ({premiumPrice} SEI)
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => watchVideo(index, watchPrice)}
-                    variant="primary"
-                    className="w-100 mb-2"
-                  >
-                    Watch Video ({watchPrice} SEI)
-                  </Button>
-                )}
+                <div className='bg-[#0c0c0c] p-5 rounded-lg shadow-lg w-full'>
+                  <div className='flex justify-between items-center mb-4'>
+                    <h5 className="text-white text-2xl font-bold">Campaign Details</h5>
+                  </div>
+                  <div className="text-gray-400 space-y-2">
+                    <p><strong>Premium Price:</strong> {premiumPrice} NERO</p>
+                    <p><strong>Watch Price:</strong> {watchPrice} NERO</p>
+                    <p><strong>Total Collected:</strong> {amountCollected} NERO</p>
+                    <p><strong>Premium Ends:</strong> {new Date(Number(video.deadline) * 1000).toLocaleString()}</p>
+                  </div>
+                  <div className='flex justify-between mt-6'>
+                    {isPremiumActive ? (
+                      <button
+                        onClick={() => donateToPremiumCampaign(index, premiumPrice)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full transition duration-300"
+                      >
+                        Get Premium Access ({premiumPrice} NERO)
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => watchVideo(index, watchPrice)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition duration-300"
+                      >
+                        Watch Video ({watchPrice} NERO)
+                      </button>
+                    )}
+                  </div>
+                </div>
                 <Button
                   variant="outline-secondary"
-                  className="w-100 mb-2"
+                  className="w-100 mb-2 mt-3"
                   onClick={() => handleWatchClick(index)}
                   disabled={isChecking}
                 >

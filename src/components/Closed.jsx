@@ -99,17 +99,24 @@ function Closed({ contractAddress, contractABI, contract }) {
                   </Badge>
                 </div>
 
-                <p><strong>Watch Price:</strong> {watchPrice} SEI</p>
-                <p><strong>Total Collected:</strong> {amountCollected} SEI</p>
-                <p><strong>Premium Ended:</strong> {new Date(Number(video.deadline) * 1000).toLocaleString()}</p>
-
-                <Button
-                  onClick={() => watchVideo(index, watchPrice)}
-                  variant="primary"
-                  className="w-100 mb-2"
-                >
-                  Watch Video ({watchPrice} SEI)
-                </Button>
+                <div className='bg-[#0c0c0c] p-5 rounded-lg shadow-lg w-full mb-3'>
+                  <div className='flex justify-between items-center mb-4'>
+                    <h5 className="text-white text-2xl font-bold">Campaign Details</h5>
+                  </div>
+                  <div className="text-gray-400 space-y-2">
+                    <p><strong>Watch Price:</strong> {watchPrice} NERO</p>
+                    <p><strong>Total Collected:</strong> {amountCollected} NERO</p>
+                    <p><strong>Premium Ended:</strong> {new Date(Number(video.deadline) * 1000).toLocaleString()}</p>
+                  </div>
+                  <div className='flex justify-between mt-6'>
+                    <button
+                      onClick={() => watchVideo(index, watchPrice)}
+                      className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition duration-300"
+                    >
+                      Watch Video ({watchPrice} NERO)
+                    </button>
+                  </div>
+                </div>
 
                 <Button
                   variant="outline-secondary"

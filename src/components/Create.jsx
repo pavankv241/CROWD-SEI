@@ -205,8 +205,8 @@ function Create({ contractAddress, contractABI, contract, connected }) {
                 className="w-full p-3 my-2 bg-gray-700 text-white rounded-lg"
               />
               
-              <div>
-                <label className="text-white mb-2 block">Premium Price (SEI)</label>
+              <div className="mb-4">
+                <label className="text-white mb-2 block">Premium Price (NERO)</label>
                 <Form.Control
                   onChange={handleChange}
                   name="premiumPrice"
@@ -217,8 +217,8 @@ function Create({ contractAddress, contractABI, contract, connected }) {
                 />
               </div>
               
-              <div>
-                <label className="text-white mb-2 block">Watch Price (SEI)</label>
+              <div className="mb-4">
+                <label className="text-white mb-2 block">Watch Price (NERO)</label>
                 <Form.Control
                   onChange={handleChange}
                   name="watchPrice"

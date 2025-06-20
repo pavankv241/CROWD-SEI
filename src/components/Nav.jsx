@@ -12,12 +12,12 @@ function Nav({ checkWallet, connected, walletAddress }) {
             <img src="https://static.wixstatic.com/media/93fed5_7dbfbf436b9244e4bce49ba0a5a1253a~mv2.png/v1/fill/w_560,h_210,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/93fed5_7dbfbf436b9244e4bce49ba0a5a1253a~mv2.png" className="h-8" alt="Flowbite Logo" />
             <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Ignitus Networks</span>
           </a>
-          
+
           <div className="flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
             <button
-              type="button" 
+              type="button"
               className={`font-medium rounded-lg text-sm px-4 py-2 text-center focus:ring-4 focus:outline-none ${
-                connected 
+                connected
                   ? "text-white bg-red-600 hover:bg-red-700 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
                   : "text-white bg-blue-700 hover:bg-blue-800 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
               }`}

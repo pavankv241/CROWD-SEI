@@ -206,25 +206,29 @@ function Create({ contractAddress, contractABI, contract, connected }) {
               />
               
               <div className="mb-4">
-                <label className="text-white mb-2 block">Premium Price (NERO)</label>
+                <label className="text-white mb-2 block">Premium Price (SEI)</label>
                 <Form.Control
                   onChange={handleChange}
                   name="premiumPrice"
                   required
                   type="number"
-                  placeholder="Price for 3-day premium access"
+                  step="0.001"
+                  min="0"
+                  placeholder="Enter premium price in SEI"
                   className="w-full p-3 my-2 bg-gray-700 text-white rounded-lg"
                 />
               </div>
               
               <div className="mb-4">
-                <label className="text-white mb-2 block">Watch Price (NERO)</label>
+                <label className="text-white mb-2 block">Watch Price (SEI)</label>
                 <Form.Control
                   onChange={handleChange}
                   name="watchPrice"
                   required
                   type="number"
-                  placeholder="Price for regular viewing after campaign"
+                  step="0.001"
+                  min="0"
+                  placeholder="Enter watch price in SEI"
                   className="w-full p-3 my-2 bg-gray-700 text-white rounded-lg"
                 />
               </div>

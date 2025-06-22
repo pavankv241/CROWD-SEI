@@ -77,7 +77,7 @@ function Closed({ contractAddress, contractABI, contract }) {
       if (error.code === 'ACTION_REJECTED' || error.reason === 'rejected') {
         userMessage = 'Transaction cancelled by user.';
       } else if (error.message && error.message.includes('insufficient funds')) {
-        userMessage = 'Insufficient NERO balance. Please add more funds to your wallet.';
+        userMessage = 'Insufficient SEI balance. Please add more funds to your wallet.';
       } else if (error.message && error.message.includes('user denied')) {
         userMessage = 'Transaction cancelled.';
       } else if (error.message && error.message.includes('Premium campaign is still active')) {
@@ -110,12 +110,12 @@ function Closed({ contractAddress, contractABI, contract }) {
         // Premium campaign is active - charge premium price
         amountInWei = ethers.parseEther(premiumPrice.toString());
         functionName = 'donateToPremiumCampaign';
-        console.log(`Premium campaign active - charging ${premiumPrice} NERO`);
+        console.log(`Premium campaign active - charging ${premiumPrice} SEI`);
       } else {
         // Premium campaign ended - charge regular watch price
         amountInWei = ethers.parseEther(watchPrice.toString());
         functionName = 'watchVideo';
-        console.log(`Premium campaign ended - charging ${watchPrice} NERO`);
+        console.log(`Premium campaign ended - charging ${watchPrice} SEI`);
       }
 
       const tx = await contract[functionName](videoId, { value: amountInWei });
@@ -123,7 +123,7 @@ function Closed({ contractAddress, contractABI, contract }) {
 
       console.log('Transaction:', tx);
       const priceCharged = isPremiumActive ? premiumPrice : watchPrice;
-      toast.success(`Payment successful! Charged ${priceCharged} NERO. You can now watch the video.`, { position: 'top-center' });
+      toast.success(`Payment successful! Charged ${priceCharged} SEI. You can now watch the video.`, { position: 'top-center' });
 
       // Add video to paid videos set
       setPaidVideos(prev => new Set([...prev, videoId]));
@@ -140,7 +140,7 @@ function Closed({ contractAddress, contractABI, contract }) {
       if (error.code === 'ACTION_REJECTED' || error.reason === 'rejected') {
         userMessage = 'Transaction cancelled by user.';
       } else if (error.message && error.message.includes('insufficient funds')) {
-        userMessage = 'Insufficient NERO balance. Please add more funds to your wallet.';
+        userMessage = 'Insufficient SEI balance. Please add more funds to your wallet.';
       } else if (error.message && error.message.includes('user denied')) {
         userMessage = 'Transaction cancelled.';
       } else if (error.message && error.message.includes('premium campaign is closed')) {
@@ -192,9 +192,9 @@ function Closed({ contractAddress, contractABI, contract }) {
                     <h5 className="text-white text-2xl font-bold">Campaign Details</h5>
                   </div>
                   <div className="text-gray-400 space-y-2">
-                    <p><strong>Premium Price:</strong> {premiumPrice} NERO</p>
-                    <p><strong>Watch Price:</strong> {watchPrice} NERO</p>
-                    <p><strong>Total Collected:</strong> {amountCollected} NERO</p>
+                    <p><strong>Premium Price:</strong> {premiumPrice} SEI</p>
+                    <p><strong>Watch Price:</strong> {watchPrice} SEI</p>
+                    <p><strong>Total Collected:</strong> {amountCollected} SEI</p>
                     <p><strong>Premium Ended:</strong> {new Date(Number(video.deadline) * 1000).toLocaleString()}</p>
                   </div>
                   <div className='flex justify-between mt-6'>
@@ -203,7 +203,7 @@ function Closed({ contractAddress, contractABI, contract }) {
                       className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition duration-300"
                       disabled={hasPaid}
                     >
-                      {hasPaid ? 'Access Granted' : `Watch Video (${watchPrice} NERO)`}
+                      {hasPaid ? 'Access Granted' : `Watch Video (${watchPrice} SEI)`}
                     </button>
                   </div>
                 </div>
@@ -215,7 +215,7 @@ function Closed({ contractAddress, contractABI, contract }) {
                   onClick={() => smartViewVideo(index, premiumPrice, watchPrice)}
                   disabled={hasPaid}
                 >
-                  {hasPaid ? 'Video Available' : `View Video (${isPremiumActive ? premiumPrice : watchPrice} NERO)`}
+                  {hasPaid ? 'Video Available' : `View Video (${isPremiumActive ? premiumPrice : watchPrice} SEI)`}
                 </Button>
 
                 {/* Show video only after payment */}

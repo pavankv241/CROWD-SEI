@@ -1,5 +1,14 @@
 {
-	"address": "0x1d45Bc7012AA2B9E6a4ff123e387e2E8a3767DD8",
+	"address": "0xd7CeBFB8bc9244563caFCcA8b9655b09789B9B6B",
+	"seiTestnet": {
+		"contractAddress": "0xd7CeBFB8bc9244563caFCcA8b9655b09789B9B6B",
+		"chainId": 1328,
+		"rpcUrl": "https://evm-rpc-testnet.sei-apis.com",
+		"blockExplorer": "https://seitrace.com/",
+		"currency": "SEI",
+		"networkName": "Sei Testnet",
+		"deploymentMethod": "Ignition"
+	},
 	"abi": [
 		{
 			"anonymous": false,

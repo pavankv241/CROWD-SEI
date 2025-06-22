@@ -10,16 +10,16 @@ import Closed from './components/Closed.jsx';
 import contractData from './contracts/contractData.json';
 import Nav from './components/Nav.jsx';
 
-const NERO_TESTNET = {
-  chainId: '0x2B1', // Chain ID for Nero Testnet (689 in hex)
-  chainName: 'Nero Testnet',
+const SEI_TESTNET = {
+  chainId: '0x530', // Chain ID for Sei Testnet (1328 in hex)
+  chainName: 'Sei Testnet',
   nativeCurrency: {
-    name: 'NERO',
-    symbol: 'NERO',
+    name: 'SEI',
+    symbol: 'SEI',
     decimals: 18,
   },
-  rpcUrls: ['https://rpc-testnet.nerochain.io'],
-  blockExplorerUrls: ['https://testnet.neroscan.io/']
+  rpcUrls: ['https://evm-rpc-testnet.sei-apis.com'],
+  blockExplorerUrls: ['https://seitrace.com/']
 };
 
 function App() {
@@ -27,7 +27,7 @@ function App() {
   const [contract, setContract] = useState(null);
   const [provider, setProvider] = useState(null);
 
-  const switchToNeroTestnet = async () => {
+  const switchToSeiTestnet = async () => {
     const { ethereum } = window;
     if (!ethereum) {
       toast.error("MetaMask is not installed!", {
@@ -39,28 +39,28 @@ function App() {
     try {
       await ethereum.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: NERO_TESTNET.chainId }],
+        params: [{ chainId: SEI_TESTNET.chainId }],
       });
-      toast.success("Switched to Nero Testnet");
+      toast.success("Switched to Sei Testnet");
     } catch (switchError) {
       if (switchError.code === 4902) {
         try {
           await ethereum.request({
             method: 'wallet_addEthereumChain',
-            params: [NERO_TESTNET],
+            params: [SEI_TESTNET],
           });
-          toast.success("Nero Testnet added to MetaMask");
+          toast.success("Sei Testnet added to MetaMask");
         } catch (addError) {
-          toast.error("Failed to add Nero Testnet to MetaMask", {
+          toast.error("Failed to add Sei Testnet to MetaMask", {
             position: toast.POSITION.TOP_RIGHT
           });
-          console.error("Error adding Nero Testnet:", addError);
+          console.error("Error adding Sei Testnet:", addError);
         }
       } else {
-        toast.error("Failed to switch to Nero Testnet", {
+        toast.error("Failed to switch to Sei Testnet", {
           position: toast.POSITION.TOP_RIGHT
         });
-        console.error("Error switching to Nero Testnet:", switchError);
+        console.error("Error switching to Sei Testnet:", switchError);
       }
     }
   };
@@ -71,10 +71,10 @@ function App() {
         const provider = new ethers.BrowserProvider(window.ethereum);
         const network = await provider.getNetwork();
         
-        if (network.chainId !== BigInt(NERO_TESTNET.chainId)) {
-          await switchToNeroTestnet();
+        if (network.chainId !== BigInt(SEI_TESTNET.chainId)) {
+          await switchToSeiTestnet();
         } else {
-          // If we're already on Nero testnet, reconnect the contract
+          // If we're already on Sei testnet, reconnect the contract
           const signer = await provider.getSigner();
           await initiateContract(signer);
         }

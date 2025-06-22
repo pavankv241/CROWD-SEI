@@ -4,14 +4,11 @@ import { toast } from 'react-toastify';
 import { ethers } from 'ethers';
 import './Home.css';
 
-function Home({ contractAddress, contractABI, contract, connected }) {
+function Home({ contract, connected }) {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [playingVideo, setPlayingVideo] = useState({}); // { [videoId]: true/false }
-  const [accessStatus, setAccessStatus] = useState({}); // { [videoId]: true/false/null }
-  const [checkingAccess, setCheckingAccess] = useState({}); // { [videoId]: true/false }
+  const [paidVideos, setPaidVideos] = useState(new Set()); // Track paid videos in current session
 
   const getVideos = async () => {
     setLoading(true);
@@ -47,7 +44,6 @@ function Home({ contractAddress, contractABI, contract, connected }) {
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
         const address = await signer.getAddress();
-        setCurrentUser(address);
       } catch (error) {
         console.error("Error getting current user:", error);
       }
@@ -81,12 +77,33 @@ function Home({ contractAddress, contractABI, contract, connected }) {
       console.log('Transaction:', tx);
       toast.success('Premium access granted! You can now watch the video.', { position: 'top-center' });
 
+      // Add video to paid videos set
+      setPaidVideos(prev => new Set([...prev, videoId]));
+
       // Refresh videos
       getVideos();
 
     } catch (error) {
       console.error("Error getting premium access:", error);
-      toast.error(`Premium access failed. ${error.message || 'Please try again.'}`, { position: 'top-center' });
+      
+      // User-friendly error messages
+      let userMessage = 'Premium access failed. Please try again.';
+      
+      if (error.code === 'ACTION_REJECTED' || error.reason === 'rejected') {
+        userMessage = 'Transaction cancelled by user.';
+      } else if (error.message && error.message.includes('insufficient funds')) {
+        userMessage = 'Insufficient NERO balance. Please add more funds to your wallet.';
+      } else if (error.message && error.message.includes('user denied')) {
+        userMessage = 'Transaction cancelled.';
+      } else if (error.message && error.message.includes('premium campaign is closed')) {
+        userMessage = 'Premium campaign has ended. Please use regular watch option.';
+      } else if (error.message && error.message.includes('Amount must be at least')) {
+        userMessage = 'Payment amount is too low. Please pay the full premium price.';
+      } else if (error.action && error.action.includes('estimateGas')) {
+        userMessage = 'Transaction failed. Please check your wallet balance and try again.';
+      }
+      
+      toast.error(userMessage, { position: 'top-center' });
     }
   };
 
@@ -108,34 +125,100 @@ function Home({ contractAddress, contractABI, contract, connected }) {
       console.log('Transaction:', tx);
       toast.success('Payment successful! You can now watch the video.', { position: 'top-center' });
 
+      // Add video to paid videos set
+      setPaidVideos(prev => new Set([...prev, videoId]));
+
       // Refresh videos
       getVideos();
 
     } catch (error) {
       console.error("Error watching video:", error);
-      toast.error(`Payment failed. ${error.message || 'Please try again.'}`, { position: 'top-center' });
+      
+      // User-friendly error messages
+      let userMessage = 'Payment failed. Please try again.';
+      
+      if (error.code === 'ACTION_REJECTED' || error.reason === 'rejected') {
+        userMessage = 'Transaction cancelled by user.';
+      } else if (error.message && error.message.includes('insufficient funds')) {
+        userMessage = 'Insufficient NERO balance. Please add more funds to your wallet.';
+      } else if (error.message && error.message.includes('user denied')) {
+        userMessage = 'Transaction cancelled.';
+      } else if (error.message && error.message.includes('Premium campaign is still active')) {
+        userMessage = 'Premium campaign is still active. Please use premium access option.';
+      } else if (error.message && error.message.includes('Amount must be at least')) {
+        userMessage = 'Payment amount is too low. Please pay the full watch price.';
+      } else if (error.action && error.action.includes('estimateGas')) {
+        userMessage = 'Transaction failed. Please check your wallet balance and try again.';
+      }
+      
+      toast.error(userMessage, { position: 'top-center' });
     }
   };
 
-  // Check access and play video in card
-  const handleWatchClick = async (videoId) => {
-    if (!contract || !currentUser) {
-      toast.error('Please connect your wallet to watch the video.', { position: 'top-center' });
-      return;
-    }
-    setCheckingAccess((prev) => ({ ...prev, [videoId]: true }));
+  const smartViewVideo = async (videoId, premiumPrice, watchPrice) => {
     try {
-      const hasAccess = await contract.hasWatchedVideo(videoId, currentUser);
-      setAccessStatus((prev) => ({ ...prev, [videoId]: hasAccess }));
-      if (hasAccess) {
-        setPlayingVideo((prev) => ({ ...prev, [videoId]: true }));
-      } else {
-        toast.error('Please pay to watch this video.', { position: 'top-center' });
+      if (!window.ethereum) {
+        throw new Error('MetaMask not found. Please make sure MetaMask is installed and connected.');
       }
+
+      if (!contract) {
+        throw new Error('Contract not initialized. Please connect your wallet.');
+      }
+
+      // Check if premium campaign is still active
+      const video = videos[videoId];
+      const isPremiumActive = Number(video.deadline) > Math.floor(Date.now() / 1000);
+      
+      let amountInWei, functionName;
+      
+      if (isPremiumActive) {
+        // Premium campaign is active - charge premium price
+        amountInWei = ethers.parseEther(premiumPrice.toString());
+        functionName = 'donateToPremiumCampaign';
+        console.log(`Premium campaign active - charging ${premiumPrice} NERO`);
+      } else {
+        // Premium campaign ended - charge regular watch price
+        amountInWei = ethers.parseEther(watchPrice.toString());
+        functionName = 'watchVideo';
+        console.log(`Premium campaign ended - charging ${watchPrice} NERO`);
+      }
+
+      const tx = await contract[functionName](videoId, { value: amountInWei });
+      await tx.wait();
+
+      console.log('Transaction:', tx);
+      const priceCharged = isPremiumActive ? premiumPrice : watchPrice;
+      toast.success(`Payment successful! Charged ${priceCharged} NERO. You can now watch the video.`, { position: 'top-center' });
+
+      // Add video to paid videos set
+      setPaidVideos(prev => new Set([...prev, videoId]));
+
+      // Refresh videos
+      getVideos();
+
     } catch (error) {
-      toast.error('Error checking access. Please try again.', { position: 'top-center' });
-    } finally {
-      setCheckingAccess((prev) => ({ ...prev, [videoId]: false }));
+      console.error("Error viewing video:", error);
+      
+      // User-friendly error messages
+      let userMessage = 'Payment failed. Please try again.';
+      
+      if (error.code === 'ACTION_REJECTED' || error.reason === 'rejected') {
+        userMessage = 'Transaction cancelled by user.';
+      } else if (error.message && error.message.includes('insufficient funds')) {
+        userMessage = 'Insufficient NERO balance. Please add more funds to your wallet.';
+      } else if (error.message && error.message.includes('user denied')) {
+        userMessage = 'Transaction cancelled.';
+      } else if (error.message && error.message.includes('premium campaign is closed')) {
+        userMessage = 'Premium campaign has ended. Please use regular watch option.';
+      } else if (error.message && error.message.includes('Premium campaign is still active')) {
+        userMessage = 'Premium campaign is still active. Please use premium access option.';
+      } else if (error.message && error.message.includes('Amount must be at least')) {
+        userMessage = 'Payment amount is too low. Please pay the full price.';
+      } else if (error.action && error.action.includes('estimateGas')) {
+        userMessage = 'Transaction failed. Please check your wallet balance and try again.';
+      }
+      console.log(error.message)
+      toast.error(userMessage, { position: 'top-center' });
     }
   };
 
@@ -146,8 +229,8 @@ function Home({ contractAddress, contractABI, contract, connected }) {
         const watchPrice = ethers.formatEther(video.watchPrice);
         const amountCollected = ethers.formatEther(video.amountCollected);
         const isPremiumActive = Number(video.deadline) > Math.floor(Date.now() / 1000);
-        const isPlaying = playingVideo[index];
-        const isChecking = checkingAccess[index];
+        const hasPaid = paidVideos.has(index);
+        
         return (
           <Col key={index} className="d-flex align-items-stretch">
             <div className="card custom-card">
@@ -190,28 +273,34 @@ function Home({ contractAddress, contractABI, contract, connected }) {
                       <button
                         onClick={() => donateToPremiumCampaign(index, premiumPrice)}
                         className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full transition duration-300"
+                        disabled={hasPaid}
                       >
-                        Get Premium Access ({premiumPrice} NERO)
+                        {hasPaid ? 'Premium Access Granted' : `Get Premium Access (${premiumPrice} NERO)`}
                       </button>
                     ) : (
                       <button
                         onClick={() => watchVideo(index, watchPrice)}
                         className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition duration-300"
+                        disabled={hasPaid}
                       >
-                        Watch Video ({watchPrice} NERO)
+                        {hasPaid ? 'Access Granted' : `Watch Video (${watchPrice} NERO)`}
                       </button>
                     )}
                   </div>
                 </div>
+                
+                {/* Smart View Button */}
                 <Button
-                  variant="outline-secondary"
+                  variant="success"
                   className="w-100 mb-2 mt-3"
-                  onClick={() => handleWatchClick(index)}
-                  disabled={isChecking}
+                  onClick={() => smartViewVideo(index, premiumPrice, watchPrice)}
+                  disabled={hasPaid}
                 >
-                  {isChecking ? 'Checking...' : 'Watch'}
+                  {hasPaid ? 'Video Available' : `View Video (${isPremiumActive ? premiumPrice : watchPrice} NERO)`}
                 </Button>
-                {isPlaying && (
+                
+                {/* Show video only after payment */}
+                {hasPaid && (
                   <div className="mt-3">
                     <video
                       src={video.videoUrl}
@@ -250,7 +339,7 @@ function Home({ contractAddress, contractABI, contract, connected }) {
             ) : videos.length === 0 ? (
               <div className="text-center mt-5">
                 <h4>No videos available</h4>
-                <p>Be the first to upload a video!</p>
+                <p>No videos have been uploaded yet.</p>
               </div>
             ) : (
               renderVideos()

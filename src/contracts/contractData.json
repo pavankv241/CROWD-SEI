@@ -1,5 +1,5 @@
 {
-	"address": "0xeD9279915853cF66CfB22B2ab53Bd244e03c6a61",
+	"address": "0x1d45Bc7012AA2B9E6a4ff123e387e2E8a3767DD8",
 	"abi": [
 		{
 			"anonymous": false,
@@ -300,30 +300,6 @@
 					"internalType": "struct VideoPlatform.VideoData[]",
 					"name": "",
 					"type": "tuple[]"
-				}
-			],
-			"stateMutability": "view",
-			"type": "function"
-		},
-		{
-			"inputs": [
-				{
-					"internalType": "uint256",
-					"name": "_videoId",
-					"type": "uint256"
-				},
-				{
-					"internalType": "address",
-					"name": "_viewer",
-					"type": "address"
-				}
-			],
-			"name": "hasWatchedVideo",
-			"outputs": [
-				{
-					"internalType": "bool",
-					"name": "",
-					"type": "bool"
 				}
 			],
 			"stateMutability": "view",
